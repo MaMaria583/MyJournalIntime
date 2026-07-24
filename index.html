@@ -982,7 +982,7 @@ function rendreSheet(){
   el.innerHTML=FONDS.filter(f=>f.t===tabFond).map(f=>
     `<div class="fond-o ${noteCourante.fond===f.id?'on':''}" style="${styleFond(f.id)}" onclick="choisirFond('${f.id}')"></div>`).join('');
 }
-function choisirFond(id){noteCourante.fond=id;appliquerFondEditeur();rendreSheet()}
+function choisirFond(id){noteCourante.fond=id;appliquerFondEditeur();fermerSheet();document.getElementById('edCorps').focus()}
 function choisirFondPerso(hex){noteCourante.fond=hex;appliquerFondEditeur()}
 
 /* ================= NAVIGATION ÉCRANS ================= */
