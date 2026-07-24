@@ -1,7 +1,7 @@
 {
-  "name": "Éclose — Ma nouvelle vie",
+  "name": "Éclose — Mes notes",
   "short_name": "Éclose",
-  "description": "Mon journal de transformation : tâches, habitudes, objectifs, journal intime, culture, carnet et anglais.",
+  "description": "Mes notes, catégories, calendrier, habitudes, objectifs, journal intime, culture, carnet et anglais.",
   "lang": "fr",
   "dir": "ltr",
   "start_url": "./index.html",
