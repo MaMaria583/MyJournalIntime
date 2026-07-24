@@ -749,10 +749,7 @@ function styleFond(id){
 let cats=DB.get('cats',null);
 if(!cats){
   cats=[
-    {id:'c1',nom:'Accueil',verrou:false},
-    {id:'c2',nom:'Mon Projet Agricole',verrou:false},
-    {id:'c3',nom:'Personnel',verrou:false},
-    {id:'c4',nom:'English Word',verrou:false}
+    {id:'c1',nom:'Accueil',verrou:false}
   ];
   DB.set('cats',cats);
 }
@@ -767,6 +764,18 @@ if(!mesNotes){
     cat:'',fond:'jaune',image:'',fav:false,rappel:'',cree:auj(),maj:Date.now()}];
   DB.set('mesnotes',mesNotes);
 }
+
+/* Migration : retirer les 3 catégories par défaut non désirées si toujours présentes
+   et non modifiées (les notes rangées dedans repassent en « Non classé »). */
+(function(){
+  const aRetirer={c2:'Mon Projet Agricole',c3:'Personnel',c4:'English Word'};
+  let change=false;
+  Object.entries(aRetirer).forEach(([id,nom])=>{
+    const c=cats.find(x=>x.id===id&&x.nom===nom);
+    if(c){cats=cats.filter(x=>x.id!==id);mesNotes.forEach(n=>{if(n.cat===id)n.cat=''});change=true}
+  });
+  if(change){DB.set('cats',cats);DB.set('mesnotes',mesNotes)}
+})();
 
 let filtreCat='tous';       // id de catégorie ou 'tous'
 let vue='cat';              // 'cat' | 'fav' | 'tag'
