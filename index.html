@@ -265,6 +265,43 @@ label.champ{display:block;font-size:13px;font-weight:600;color:var(--doux);margi
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:#2b3247;color:#fff;
   padding:11px 20px;border-radius:24px;font-size:14px;opacity:0;pointer-events:none;transition:.3s;z-index:80;box-shadow:0 6px 20px rgba(0,0,0,.25)}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---------- ÉDITEUR RICHE ---------- */
+.ed-zone{padding-bottom:90px}
+.ed-corps{white-space:pre-wrap;word-break:break-word}
+.ed-corps:empty:before{content:attr(data-ph);color:#00000030}
+.ed-corps:focus{outline:none}
+.ed-corps img{max-width:100%;border-radius:10px;margin:6px 0;display:block}
+.ed-corps hr{border:none;border-top:2px solid #0000001f;margin:14px 0}
+.ed-corps h2{font-size:21px;margin:10px 0 4px}
+.ed-corps h3{font-size:18px;margin:8px 0 4px}
+.ed-corps ul,.ed-corps ol{padding-left:22px;margin:6px 0}
+.ckbox{cursor:pointer;font-size:18px;user-select:none;margin-right:2px}
+.n-corps img{max-height:130px;object-fit:cover;border-radius:8px;margin:4px 0;display:block}
+.n-corps hr{border:none;border-top:1px solid #00000018;margin:6px 0}
+.n-corps ul,.n-corps ol{padding-left:18px;margin:4px 0}
+
+/* barre d'outils */
+.ed-toolbar{position:fixed;left:0;right:0;bottom:0;background:#fff;display:flex;justify-content:space-around;align-items:center;
+  padding:8px 6px calc(8px + env(safe-area-inset-bottom));box-shadow:0 -3px 16px rgba(0,0,0,.09);z-index:15;border-radius:18px 18px 0 0}
+.ed-toolbar .tb{width:42px;height:42px;border-radius:12px;font-size:20px;font-weight:800;display:flex;align-items:center;justify-content:center;position:relative}
+.ed-toolbar .tb:active{background:#00000010}
+.ed-toolbar .tb.pt:after{content:'';position:absolute;top:7px;right:8px;width:6px;height:6px;border-radius:50%;background:#ff5a5f}
+.ed-format,.ed-emoji{position:fixed;left:8px;right:8px;bottom:66px;background:#fff;border-radius:16px;box-shadow:0 8px 28px rgba(0,0,0,.18);z-index:16;padding:10px}
+.ed-format{display:none;flex-wrap:wrap;gap:6px}
+.ed-format.on{display:flex}
+.ed-format button{padding:9px 13px;border-radius:11px;background:#f2ede3;font-size:15px;color:var(--texte)}
+.ed-emoji{display:none;grid-template-columns:repeat(8,1fr);gap:2px;max-height:210px;overflow-y:auto}
+.ed-emoji.on{display:grid}
+.ed-emoji button{font-size:23px;padding:5px 0}
+
+/* modal dessin */
+.dessin-modal{position:fixed;inset:0;background:#00000088;z-index:70;display:none;flex-direction:column}
+.dessin-modal.on{display:flex}
+.dessin-barre{background:#fff;display:flex;align-items:center;gap:10px;padding:12px;padding-top:calc(12px + env(safe-area-inset-top))}
+#dessinCanvas{flex:1;background:#fff;touch-action:none;display:block;width:100%}
+.dcoul{width:26px;height:26px;border-radius:50%;box-shadow:0 0 0 1px #ccc;cursor:pointer}
+.dcoul.on{box-shadow:0 0 0 2px #2f9bf5,0 0 0 4px #fff}
 </style>
 </head>
 <body>
@@ -312,9 +349,35 @@ label.champ{display:block;font-size:13px;font-weight:600;color:var(--doux);margi
     <input type="text" class="ed-titre" id="edTitre" placeholder="Titre" oninput="edMaj()">
     <span class="ed-img-sup cache" id="edImgSup" onclick="retirerImage()">🖼️ Retirer l'image</span>
     <img class="ed-img cache" id="edImg">
-    <textarea class="ed-corps" id="edCorps" placeholder="Notez ici..." oninput="edPushHist();edMaj()"></textarea>
+    <div class="ed-corps" id="edCorps" contenteditable="true" data-ph="Notez ici..." oninput="edMaj()"></div>
   </div>
   <input type="file" id="fichierImg" accept="image/*" class="cache" onchange="chargerImage(event)">
+
+  <!-- popover mise en forme -->
+  <div class="ed-format" id="edFormat">
+    <button type="button" onclick="fmt('bold')"><b>G</b></button>
+    <button type="button" onclick="fmt('italic')"><i>I</i></button>
+    <button type="button" onclick="fmt('underline')"><u>S</u></button>
+    <button type="button" onclick="fmt('strikeThrough')"><s>Barré</s></button>
+    <button type="button" onclick="fmt('formatBlock','H2')">Titre</button>
+    <button type="button" onclick="fmt('formatBlock','H3')">Sous-titre</button>
+    <button type="button" onclick="fmt('formatBlock','div')">Normal</button>
+    <button type="button" onclick="fmt('insertOrderedList')">1. Liste</button>
+  </div>
+  <!-- popover emoji -->
+  <div class="ed-emoji" id="edEmoji"></div>
+
+  <!-- barre d'outils -->
+  <div class="ed-toolbar" id="edToolbar">
+    <button type="button" class="tb" onclick="basculerFormat()">Aa</button>
+    <button type="button" class="tb" onclick="insererChecklist()">☑️</button>
+    <button type="button" class="tb" id="tbMic" onclick="dictee()">🎤</button>
+    <button type="button" class="tb pt" onclick="ouvrirDessin()">✏️</button>
+    <button type="button" class="tb" onclick="ajouterImage()">🖼️</button>
+    <button type="button" class="tb" onclick="basculerEmoji()">😊</button>
+    <button type="button" class="tb" onclick="insererDivider()">▤</button>
+    <button type="button" class="tb" onclick="fmt('insertUnorderedList')">☰</button>
+  </div>
 
   <!-- bottom sheet fonds -->
   <div class="sheet" id="sheetFonds">
@@ -322,6 +385,18 @@ label.champ{display:block;font-size:13px;font-weight:600;color:var(--doux);margi
     <div class="fonds" id="listeFonds"></div>
   </div>
 </section>
+
+<!-- ============ MODAL DESSIN ============ -->
+<div class="dessin-modal" id="dessinModal">
+  <div class="dessin-barre">
+    <button class="ico-btn" onclick="annulerDessin()">✕</button>
+    <span style="font-weight:700">Dessiner</span>
+    <span style="margin-left:auto;display:flex;gap:8px" id="dessinCouleurs"></span>
+    <button class="ico-btn" onclick="effacerDessin()">🧹</button>
+    <button class="ico-btn" onclick="validerDessin()">✓</button>
+  </div>
+  <canvas id="dessinCanvas"></canvas>
+</div>
 
 <!-- ============ CALENDRIER ============ -->
 <section class="ecran" id="ecranCalendrier">
@@ -723,8 +798,9 @@ function deverrouiller(id){
 }
 
 /* ---------- rendu notes ---------- */
-function noteInclut(n,q){return ((n.titre||'')+' '+(n.corps||'')).toLowerCase().includes(q)}
-function extraireTags(n){const m=((n.titre||'')+' '+(n.corps||'')).match(/#[\p{L}\d_]+/gu);return m?[...new Set(m.map(x=>x.toLowerCase()))]:[]}
+function noteInclut(n,q){return texteNote(n).toLowerCase().includes(q)}
+function extraireTags(n){const m=texteNote(n).match(/#[\p{L}\d_]+/gu);return m?[...new Set(m.map(x=>x.toLowerCase()))]:[]}
+function apercuCorps(n){const html=corpsHtml(n);const vide=!stripHTML(html).trim()&&!/<(img|hr)/i.test(html);return vide?'':`<div class="n-corps">${html}</div>`}
 
 function notesFiltrees(){
   let lst=mesNotes.slice();
@@ -759,7 +835,7 @@ function rendreNotes(){
     return `<div class="note" style="${styleFond(n.fond)}" onclick="ouvrirNote('${n.id}')">
       ${n.titre?`<div class="n-titre">${escape(n.titre)}</div>`:''}
       ${n.image?`<img class="n-img" src="${n.image}">`:''}
-      ${n.corps?`<div class="n-corps">${escape(n.corps)}</div>`:''}
+      ${apercuCorps(n)}
       <div class="n-bas">
         ${c?`<span class="n-cat">${escape(c.nom)}</span>`:''}
         <span class="n-date" ${c?'':''}>${d}</span>
@@ -782,15 +858,20 @@ function fermerRecherche(){document.getElementById('inpRech').value='';document.
 function menuTri(){triNote=triNote==='date'?'titre':'date';DB.set('triNote',triNote);toast(triNote==='date'?'Tri : par date':'Tri : par titre');rendreNotes()}
 
 /* ================= ÉDITEUR ================= */
-let noteCourante=null, histU=[], histR=[];
-function nouvelleNote(){ouvrirEditeur({id:uid(),titre:'',corps:'',cat:(filtreCat!=='tous'&&vue==='cat'?filtreCat:''),fond:'jaune',image:'',fav:false,rappel:'',cree:auj(),maj:Date.now()},true)}
-function nouvelleNoteDate(){const d=calSel||auj();ouvrirEditeur({id:uid(),titre:'',corps:'',cat:'',fond:'jaune',image:'',fav:false,rappel:'',cree:d,maj:Date.now()},true)}
+let noteCourante=null;
+function stripHTML(h){const d=document.createElement('div');d.innerHTML=h||'';return d.textContent||''}
+function plainToHtml(t){return escape(t||'').replace(/\n/g,'<br>')}
+function corpsHtml(n){return n.html?(n.corps||''):plainToHtml(n.corps)}
+function texteNote(n){return (n.titre||'')+' '+(n.html?stripHTML(n.corps):(n.corps||''))}
+function nouvelleNote(){ouvrirEditeur({id:uid(),titre:'',corps:'',html:true,cat:(filtreCat!=='tous'&&vue==='cat'?filtreCat:''),fond:'jaune',image:'',fav:false,rappel:'',cree:auj(),maj:Date.now()},true)}
+function nouvelleNoteDate(){const d=calSel||auj();ouvrirEditeur({id:uid(),titre:'',corps:'',html:true,cat:'',fond:'jaune',image:'',fav:false,rappel:'',cree:d,maj:Date.now()},true)}
 function ouvrirNote(id){const n=mesNotes.find(x=>x.id===id);if(n)ouvrirEditeur(JSON.parse(JSON.stringify(n)),false)}
 function ouvrirEditeur(n,neuve){
-  noteCourante=n; noteCourante._neuve=neuve; histU=[n.corps||'']; histR=[];
+  noteCourante=n; noteCourante._neuve=neuve;
   document.getElementById('edTitre').value=n.titre||'';
-  document.getElementById('edCorps').value=n.corps||'';
+  document.getElementById('edCorps').innerHTML=corpsHtml(n);
   document.getElementById('edDate').textContent=(n.cree===auj()?'Aujourd\'hui':new Date(n.cree).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}));
+  document.getElementById('edFormat').classList.remove('on');document.getElementById('edEmoji').classList.remove('on');
   majImgUI(); majFavUI(); majCatSelect(); appliquerFondEditeur();
   ouvrir('ecranEditeur');
 }
@@ -808,15 +889,55 @@ function majImgUI(){
   if(noteCourante.image){img.src=noteCourante.image;img.classList.remove('cache');sup.classList.remove('cache')}
   else{img.classList.add('cache');sup.classList.add('cache')}
 }
-function edMaj(){/* léger, sauvegarde à la fermeture */}
-function edPushHist(){const v=document.getElementById('edCorps').value;if(histU[histU.length-1]!==v){histU.push(v);if(histU.length>60)histU.shift();histR=[]}}
-function edUndo(){if(histU.length>1){histR.push(histU.pop());document.getElementById('edCorps').value=histU[histU.length-1]}}
-function edRedo(){if(histR.length){const v=histR.pop();histU.push(v);document.getElementById('edCorps').value=v}}
+function edMaj(){}
+function edUndo(){assurerFocus();document.execCommand('undo')}
+function edRedo(){assurerFocus();document.execCommand('redo')}
+
+/* --- mise en forme riche --- */
+function assurerFocus(){
+  const e=document.getElementById('edCorps'),s=getSelection();
+  if(!s.rangeCount||!e.contains(s.anchorNode)){e.focus();const r=document.createRange();r.selectNodeContents(e);r.collapse(false);s.removeAllRanges();s.addRange(r)}
+}
+function fmt(cmd,val){assurerFocus();document.execCommand(cmd,false,val||null);document.getElementById('edFormat').classList.remove('on')}
+function basculerFormat(){document.getElementById('edEmoji').classList.remove('on');document.getElementById('edFormat').classList.toggle('on')}
+function basculerEmoji(){document.getElementById('edFormat').classList.remove('on');document.getElementById('edEmoji').classList.toggle('on')}
+function insererEmoji(e){assurerFocus();document.execCommand('insertText',false,e)}
+function insererChecklist(){assurerFocus();document.execCommand('insertHTML',false,'<span class="ckbox" contenteditable="false" onclick="cocher(event,this)">☐</span>&nbsp;')}
+function cocher(ev,el){ev.stopPropagation();el.textContent=el.textContent.trim()==='☐'?'✅':'☐'}
+function insererDivider(){assurerFocus();document.execCommand('insertHTML',false,'<hr>')}
+
+/* --- dictée vocale --- */
+let reco=null,ecoute=false;
+function dictee(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){toast('Dictée non supportée sur cet appareil');return}
+  if(ecoute){try{reco.stop()}catch(e){}return}
+  reco=new SR();reco.lang='fr-FR';reco.interimResults=false;reco.continuous=false;
+  reco.onstart=()=>{ecoute=true;document.getElementById('tbMic').style.color='#e53935'};
+  reco.onend=()=>{ecoute=false;document.getElementById('tbMic').style.color=''};
+  reco.onerror=()=>{ecoute=false;document.getElementById('tbMic').style.color='';toast('Micro indisponible')};
+  reco.onresult=e=>{const t=e.results[0][0].transcript;assurerFocus();document.execCommand('insertText',false,t+' ')};
+  try{reco.start();toast('🎤 Parle...')}catch(e){}
+}
+
+/* --- dessin --- */
+let dCtx=null,dDessine=false,dCoul='#2b3247';
+const DCOULEURS=['#2b3247','#e53935','#1e88e5','#43a047','#fb8c00','#8e24aa'];
+function buildCouleurs(){document.getElementById('dessinCouleurs').innerHTML=DCOULEURS.map(c=>`<span class="dcoul ${c===dCoul?'on':''}" style="background:${c}" onclick="dCoul='${c}';buildCouleurs()"></span>`).join('')}
+function ouvrirDessin(){
+  const m=document.getElementById('dessinModal');m.classList.add('on');buildCouleurs();
+  requestAnimationFrame(()=>{const cv=document.getElementById('dessinCanvas');cv.width=cv.clientWidth;cv.height=cv.clientHeight;dCtx=cv.getContext('2d');dCtx.fillStyle='#fff';dCtx.fillRect(0,0,cv.width,cv.height);dCtx.lineCap='round';dCtx.lineJoin='round'});
+}
+function annulerDessin(){document.getElementById('dessinModal').classList.remove('on')}
+function effacerDessin(){if(dCtx){const cv=document.getElementById('dessinCanvas');dCtx.fillStyle='#fff';dCtx.fillRect(0,0,cv.width,cv.height)}}
+function validerDessin(){const cv=document.getElementById('dessinCanvas');const url=cv.toDataURL('image/png');assurerFocus();document.execCommand('insertHTML',false,`<img src="${url}">`);annulerDessin()}
 function fermerEditeur(){
   noteCourante.titre=document.getElementById('edTitre').value.trim();
-  noteCourante.corps=document.getElementById('edCorps').value.trim();
+  noteCourante.corps=document.getElementById('edCorps').innerHTML.trim();
+  noteCourante.html=true;
   noteCourante.maj=Date.now();
-  const vide=!noteCourante.titre&&!noteCourante.corps&&!noteCourante.image;
+  const sansTexte=!stripHTML(noteCourante.corps).trim()&&!/<(img|hr)/i.test(noteCourante.corps);
+  const vide=!noteCourante.titre&&sansTexte&&!noteCourante.image;
   const i=mesNotes.findIndex(x=>x.id===noteCourante.id);
   if(vide){ if(i>=0){mesNotes.splice(i,1)} }
   else{ delete noteCourante._neuve; if(i>=0)mesNotes[i]=noteCourante; else mesNotes.unshift(noteCourante); }
@@ -985,7 +1106,7 @@ function rendreCalNotes(){
   const dtxt=new Date(calSel).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
   if(!lst.length){el.innerHTML=`<div class="vide" style="padding:30px 20px"><b style="color:var(--doux);text-transform:capitalize">${dtxt}</b><br><br>Pas de notes ce jour-là.<br>Appuyez sur « + » pour en ajouter une.</div>`;return}
   el.innerHTML=`<div style="font-weight:700;text-transform:capitalize;margin:0 4px 10px">${dtxt}</div>`+
-    lst.map(n=>`<div class="note-hist" onclick="ouvrirNote('${n.id}')"><div class="titre-note">${escape(n.titre||'(sans titre)')}</div>${n.corps?`<div class="corps" style="font-family:inherit;-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden">${escape(n.corps)}</div>`:''}</div>`).join('');
+    lst.map(n=>{const t=texteNote(n).replace(n.titre||'','').trim();return `<div class="note-hist" onclick="ouvrirNote('${n.id}')"><div class="titre-note">${escape(n.titre||'(sans titre)')}</div>${t?`<div class="corps" style="font-family:inherit;-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden">${escape(t)}</div>`:''}</div>`}).join('');
 }
 
 /* ================= OUTILS ÉCLOSE ================= */
@@ -1074,6 +1195,21 @@ function finRevision(fini){document.getElementById('carteRevision').style.displa
 
 /* ================= INIT ================= */
 rendreChips(); rendreNotes(); rendreDrawerCats(); majBadges();
+
+/* barre d'outils : préserver la sélection (les boutons ne volent pas le focus) */
+['edToolbar','edFormat','edEmoji'].forEach(id=>{const c=document.getElementById(id);if(c)c.addEventListener('mousedown',e=>e.preventDefault())});
+/* grille d'emojis */
+const EMOJIS=['😊','😍','🥰','😂','😌','😔','😢','😤','😎','🤔','👍','🙏','💪','🔥','✨','🌟','💛','❤️','💜','💚','🌸','🌷','🌈','☀️','🌙','⭐','✅','❌','📌','📝','💡','🎯','🎉','🍅','🐐','🌱','🥦','📚','⏰','💰','🏆','😇','😴','🤗','👏','🙌','💫','🇬🇧'];
+document.getElementById('edEmoji').innerHTML=EMOJIS.map(e=>`<button type="button" onclick="insererEmoji('${e}')">${e}</button>`).join('');
+/* dessin : gestion du tracé */
+(function(){
+  const cv=document.getElementById('dessinCanvas');
+  const pos=e=>{const r=cv.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+  cv.addEventListener('pointerdown',e=>{if(!dCtx)return;dDessine=true;const[x,y]=pos(e);dCtx.strokeStyle=dCoul;dCtx.lineWidth=3.5;dCtx.beginPath();dCtx.moveTo(x,y);try{cv.setPointerCapture(e.pointerId)}catch(_){}});
+  cv.addEventListener('pointermove',e=>{if(!dDessine||!dCtx)return;const[x,y]=pos(e);dCtx.lineTo(x,y);dCtx.stroke()});
+  cv.addEventListener('pointerup',()=>dDessine=false);
+  cv.addEventListener('pointercancel',()=>dDessine=false);
+})();
 
 /* ---------- PWA ---------- */
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
