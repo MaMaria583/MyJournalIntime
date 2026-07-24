@@ -1,0 +1,7 @@
+# Config interne de l'outil (non liée à l'app)
+.claude/
+
+# Fichiers système
+Thumbs.db
+desktop.ini
+.DS_Store

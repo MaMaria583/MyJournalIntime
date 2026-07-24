@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#b76e79">
+<title>Éclose — Ma nouvelle vie</title>
+
+<!-- PWA : app installable + hors-ligne -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Éclose">
+<meta name="description" content="Mon journal de transformation : tâches, habitudes, objectifs, journal intime, culture, carnet et anglais.">
+<meta name="color-scheme" content="light dark">
+<style>
+  :root{
+    /* rose doux, rose foncé, violet & blanc */
+    --rose:#e08aa6; --rose-clair:#fbe6ee; --rose-fonce:#9c2f5c;
+    --or:#9b6ec9; --or-clair:#efe8f9;            /* accent violet doux */
+    --lavande:#7c53c4; --lavande-clair:#ece4f8;  /* violet */
+    --vert:#c25b8e; --vert-clair:#fbe3ee;        /* rose foncé (2e accent) */
+    --fond:#fbe1ec; --carte:#ffffff; --bord:#f3d4e0;
+    --texte:#3a2436; --texte-doux:#8a7383; --texte-pale:#c6aebb;
+    --ombre:0 6px 24px rgba(124,83,196,.10);
+    --r:18px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --rose:#e79fb6; --rose-clair:#3d2733; --rose-fonce:#f0b3c8;
+      --or:#b394e0; --or-clair:#2e2540;
+      --lavande:#b79ae6; --lavande-clair:#2a2340;
+      --vert:#e08ab0; --vert-clair:#3a2431;
+      --fond:#1a1520; --carte:#241d2b; --bord:#392e42;
+      --texte:#f2e7ef; --texte-doux:#c0abbd; --texte-pale:#7d6b7d;
+      --ombre:0 6px 24px rgba(0,0,0,.4);
+    }
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--fond);color:var(--texte);line-height:1.55;padding-bottom:88px}
+  h1,h2,h3{font-weight:600;margin:0}
+  button{font-family:inherit;cursor:pointer;border:none}
+  input,textarea,select{font-family:inherit;font-size:16px}
+
+  header{padding:26px 20px 18px;background:linear-gradient(135deg,var(--rose),var(--lavande));color:#fff}
+  @media (prefers-color-scheme: dark){header{background:linear-gradient(135deg,#5c2f44,#3a2a56)}}
+  .salut{font-size:14px;opacity:.9;margin-bottom:2px}
+  .date{font-size:13px;opacity:.8;text-transform:capitalize}
+  header h1{font-size:26px;margin:2px 0 10px;letter-spacing:.3px}
+  .citation{background:rgba(255,255,255,.18);border-radius:14px;padding:12px 14px;font-size:14.5px;font-style:italic;backdrop-filter:blur(4px)}
+  #btnInstall{align-items:center;gap:6px;background:rgba(255,255,255,.22);color:#fff;font-size:13.5px;font-weight:600;padding:8px 14px;border-radius:20px;margin-bottom:10px;backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.35)}
+  #btnInstall:active{transform:scale(.96)}
+
+  main{max-width:640px;margin:0 auto;padding:18px 16px}
+  .page{display:none;animation:fade .35s ease}
+  .page.actif{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .carte{background:var(--carte);border:1px solid var(--bord);border-radius:var(--r);padding:16px;margin-bottom:16px;box-shadow:var(--ombre)}
+  .titre-sec{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--texte-doux);margin:2px 0 12px}
+  .pastille{width:9px;height:9px;border-radius:50%;background:var(--rose)}
+
+  /* stats accueil */
+  .stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+  .stat{background:var(--carte);border:1px solid var(--bord);border-radius:14px;padding:14px 8px;text-align:center}
+  .stat .num{font-size:24px;font-weight:700;color:var(--rose)}
+  .stat .lbl{font-size:11px;color:var(--texte-doux);margin-top:2px}
+
+  .barre{height:9px;background:var(--rose-clair);border-radius:20px;overflow:hidden;margin-top:8px}
+  .barre span{display:block;height:100%;background:linear-gradient(90deg,var(--rose),var(--or));width:0;transition:width .5s}
+
+  /* qualités */
+  .qual{display:flex;flex-wrap:wrap;gap:8px}
+  .tag{background:var(--or-clair);color:var(--or);font-size:13px;font-weight:600;padding:6px 12px;border-radius:20px}
+
+  /* liste tâches */
+  .ligne{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--bord)}
+  .ligne:last-child{border-bottom:none}
+  .check{flex:none;width:24px;height:24px;border-radius:50%;border:2px solid var(--rose);display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;transition:.2s}
+  .check.on{background:var(--rose)}
+  .ligne .txt{flex:1;font-size:15px}
+  .ligne.fait .txt{text-decoration:line-through;color:var(--texte-pale)}
+  .meta{font-size:12px;color:var(--texte-doux)}
+  .badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;flex:none}
+  .badge.boulot{background:var(--lavande-clair);color:var(--lavande)}
+  .badge.perso{background:var(--vert-clair);color:var(--vert)}
+  .sup{flex:none;color:var(--texte-pale);font-size:18px;background:none;padding:4px 6px}
+
+  .ajout{display:flex;gap:8px;margin-top:12px}
+  .ajout input[type=text]{flex:1;padding:11px 12px;border:1px solid var(--bord);border-radius:12px;background:var(--fond);color:var(--texte)}
+  .ajout select{padding:0 8px;border:1px solid var(--bord);border-radius:12px;background:var(--fond);color:var(--texte)}
+  .btn-plus{background:var(--rose);color:#fff;width:44px;border-radius:12px;font-size:22px;flex:none}
+
+  /* habitudes */
+  .hab{margin-bottom:14px}
+  .hab-tete{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .hab-nom{font-size:15px;font-weight:600}
+  .hab-but{font-size:12px;color:var(--texte-doux)}
+  .semaine{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .jour{aspect-ratio:1;border-radius:12px;background:var(--fond);border:1px solid var(--bord);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;color:var(--texte-doux);cursor:pointer;transition:.15s}
+  .jour .j{font-weight:600}
+  .jour.on{background:var(--rose);border-color:var(--rose);color:#fff}
+  .jour.ajd{box-shadow:0 0 0 2px var(--or)}
+  .feu{font-size:13px;color:var(--or);font-weight:700}
+
+  /* objectifs */
+  .obj{padding:14px 0;border-bottom:1px solid var(--bord)}
+  .obj:last-child{border-bottom:none}
+  .obj-tete{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+  .obj-nom{font-size:15.5px;font-weight:600;flex:1}
+  .obj-ctrl{display:flex;align-items:center;gap:10px}
+  .obj-ctrl button{width:28px;height:28px;border-radius:8px;background:var(--rose-clair);color:var(--rose);font-size:16px;font-weight:700}
+  .obj-pct{font-size:13px;color:var(--rose);font-weight:700;min-width:38px;text-align:right}
+
+  /* journal */
+  textarea{width:100%;border:1px solid var(--bord);border-radius:12px;padding:12px;background:var(--fond);color:var(--texte);resize:vertical;min-height:70px}
+  textarea.grand{min-height:170px;line-height:1.7;font-family:Georgia,'Times New Roman',serif;font-size:15.5px}
+  label.champ{display:block;font-size:13px;font-weight:600;color:var(--texte-doux);margin:12px 0 6px}
+  .btn-plein{background:var(--rose);color:#fff;padding:12px;border-radius:12px;font-size:15px;font-weight:600;width:100%;margin-top:14px}
+  .btn-annuler{background:none;color:var(--texte-doux);padding:10px;border-radius:12px;font-size:14px;width:100%;margin-top:8px}
+  .date-entree{font-size:14px;color:var(--rose);font-weight:600;text-transform:capitalize;margin-bottom:4px}
+  .inp-titre{width:100%;border:1px solid var(--bord);border-radius:12px;padding:11px 12px;background:var(--fond);color:var(--texte)}
+  .humeurs{display:flex;flex-wrap:wrap;gap:6px}
+  .humeurs button{font-size:22px;width:42px;height:42px;border-radius:12px;background:var(--fond);border:1px solid var(--bord);transition:.15s;line-height:1}
+  .humeurs button.on{background:var(--rose-clair);border-color:var(--rose);transform:scale(1.1)}
+  .petits-champs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:520px){.petits-champs{grid-template-columns:1fr}}
+  .petits-champs textarea{min-height:56px}
+  .recherche input{width:100%;border:1px solid var(--bord);border-radius:12px;padding:10px 12px;background:var(--fond);color:var(--texte);margin-bottom:10px}
+  .note-hist{background:var(--fond);border-radius:14px;padding:14px;margin-top:10px;font-size:14px;border:1px solid var(--bord)}
+  .note-hist .haut{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px}
+  .note-hist .d{font-size:12px;color:var(--texte-doux);text-transform:capitalize}
+  .note-hist .hum{font-size:20px}
+  .note-hist .titre-note{font-weight:600;font-size:15px;margin-bottom:4px}
+  .note-hist .corps{white-space:pre-wrap;font-family:Georgia,serif;line-height:1.65;margin-bottom:6px}
+  .note-hist .extra{font-size:13px;color:var(--texte-doux);margin-top:6px;padding-top:6px;border-top:1px dashed var(--bord)}
+  .note-hist .actions{display:flex;gap:6px;margin-top:8px}
+  .note-hist .actions button{font-size:12px;padding:5px 12px;border-radius:20px;background:var(--carte);border:1px solid var(--bord);color:var(--texte-doux)}
+  .note-hist .actions button.mod{color:var(--rose)}
+
+  .vide{text-align:center;color:var(--texte-pale);font-size:14px;padding:14px 0}
+
+  /* type de contenu (livre/film...) */
+  .type-choix{display:flex;flex-wrap:wrap;gap:6px}
+  .type-choix button{font-size:13px;font-weight:600;padding:8px 12px;border-radius:20px;background:var(--fond);border:1px solid var(--bord);color:var(--texte-doux)}
+  .type-choix button.on{background:var(--rose-clair);border-color:var(--rose);color:var(--rose-fonce)}
+  .filtres{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  .filtres button{font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:20px;background:var(--fond);border:1px solid var(--bord);color:var(--texte-doux)}
+  .filtres button.on{background:var(--lavande);border-color:var(--lavande);color:#fff}
+  .etoiles{font-size:26px;letter-spacing:4px;color:var(--or);cursor:pointer;user-select:none}
+  .etoiles span{transition:.1s}
+
+  /* fiche culture */
+  .fiche{background:var(--fond);border:1px solid var(--bord);border-radius:14px;padding:13px;margin-top:10px}
+  .fiche .ft{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+  .fiche .ftype{font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;background:var(--lavande-clair);color:var(--lavande);flex:none}
+  .fiche .fnom{font-weight:600;font-size:15.5px}
+  .fiche .fauteur{font-size:13px;color:var(--texte-doux)}
+  .fiche .fnote{color:var(--or);font-size:15px;margin:4px 0}
+  .fiche .favis{font-size:14px;white-space:pre-wrap;line-height:1.6;margin-top:6px}
+  .fiche .actions{display:flex;gap:6px;margin-top:8px}
+  .fiche .actions button{font-size:12px;padding:5px 12px;border-radius:20px;background:var(--carte);border:1px solid var(--bord);color:var(--texte-doux)}
+  .fiche .actions button.mod{color:var(--rose)}
+
+  /* flashcard anglais */
+  .flashcard{background:linear-gradient(135deg,var(--vert-clair),var(--rose-clair));border:1px solid var(--bord);border-radius:16px;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;cursor:pointer}
+  .fc-face{font-size:26px;font-weight:700;color:var(--texte)}
+  .fc-hint{font-size:12px;color:var(--texte-doux);margin-top:10px}
+  .fc-boutons{display:flex;gap:10px;margin-top:12px}
+  .fc-boutons button{flex:1;padding:12px;border-radius:12px;font-size:14px;font-weight:600}
+  .fc-non{background:var(--or-clair);color:var(--or)}
+  .fc-oui{background:var(--vert);color:#fff}
+  .voc{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--bord)}
+  .voc:last-child{border-bottom:none}
+  .voc .ven{font-weight:600;font-size:15px}
+  .voc .vfr{font-size:14px;color:var(--texte-doux)}
+  .voc .vex{font-size:12.5px;color:var(--texte-pale);font-style:italic}
+  .voc .vok{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--vert);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--vert);cursor:pointer}
+  .voc .vok.on{background:var(--vert);color:#fff}
+
+  /* nav */
+  nav{position:fixed;bottom:0;left:0;right:0;background:var(--carte);border-top:1px solid var(--bord);display:flex;overflow-x:auto;padding:8px 4px calc(8px + env(safe-area-inset-bottom));z-index:10;scrollbar-width:none}
+  nav::-webkit-scrollbar{display:none}
+  nav button{background:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--texte-pale);padding:4px 6px;flex:0 0 auto;min-width:56px}
+  nav button .ic{font-size:20px}
+  nav button.actif{color:var(--rose)}
+  nav button.actif .ic{transform:translateY(-1px)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="salut" id="salut">Bonjour</div>
+  <div class="date" id="dateJour"></div>
+  <h1>Éclose 🌸</h1>
+  <button id="btnInstall" onclick="installerApp()" style="display:none">⬇️ Installer l'app</button>
+  <div class="citation" id="citation"></div>
+</header>
+
+<main>
+  <!-- ACCUEIL -->
+  <section class="page actif" id="accueil">
+    <div class="stats">
+      <div class="stat"><div class="num" id="sTaches">0</div><div class="lbl">tâches faites</div></div>
+      <div class="stat"><div class="num" id="sHab">0</div><div class="lbl">habitudes du jour</div></div>
+      <div class="stat"><div class="num" id="sFeu">0</div><div class="lbl">jour de suite 🔥</div></div>
+    </div>
+
+    <div class="carte">
+      <div class="titre-sec"><span class="pastille"></span>Progrès du jour</div>
+      <div id="resumeJour" style="font-size:14.5px;color:var(--texte-doux)"></div>
+      <div class="barre"><span id="barreJour"></span></div>
+    </div>
+
+    <div class="carte">
+      <div class="titre-sec"><span class="pastille" style="background:var(--or)"></span>Rappelle-toi qui tu es</div>
+      <div class="qual" id="qualites"></div>
+      <p style="font-size:14px;color:var(--texte-doux);margin:12px 0 0">Tu es déjà quelqu'un de précieux. Chaque petit pas d'aujourd'hui construit la femme accomplie que tu deviens. 💫</p>
+    </div>
+
+    <div class="carte">
+      <div class="titre-sec"><span class="pastille" style="background:var(--vert)"></span>Ce que je transforme</div>
+      <div id="defauts" style="font-size:14.5px"></div>
+    </div>
+  </section>
+
+  <!-- AUJOURD'HUI -->
+  <section class="page" id="jour">
+    <div class="carte">
+      <div class="titre-sec"><span class="pastille" style="background:var(--lavande)"></span>Boulot</div>
+      <div id="listeBoulot"></div>
+    </div>
+    <div class="carte">
+      <div class="titre-sec"><span class="pastille" style="background:var(--vert)"></span>Mes activités</div>
+      <div id="listePerso"></div>
+    </div>
+    <div class="carte">
+      <div class="titre-sec"><span class="pastille"></span>Ajouter une tâche</div>
+      <div class="ajout">
+        <input type="text" id="inpTache" placeholder="Ex : appeler le fournisseur..." onkeydown="if(event.key==='Enter')ajouterTache()">
+        <select id="inpType"><option value="boulot">Boulot</option><option value="perso">Perso</option></select>
+        <button class="btn-plus" onclick="ajouterTache()">+</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- HABITUDES -->
+  <section class="page" id="habitudes">
+    <div class="carte">
+      <div class="titre-sec"><span class="pastille"></span>Mes habitudes de transformation</div>
+      <p style="font-size:13.5px;color:var(--texte-doux);margin:0 0 14px">Coche chaque jour où tu réussis. Ces gestes battent la routine, la paresse et te font sortir de ta zone de confort.</p>
+      <div id="listeHab"></div>
+    </div>
+    <div class="carte">
+      <div class="titre-sec"><span class="pastille" style="background:var(--or)"></span>Nouvelle habitude</div>
+      <div class="ajout">
+        <input type="text" id="inpHab" placeholder="Ex : marcher 20 minutes..." onkeydown="if(event.key==='Enter')ajouterHab()">
+        <button class="btn-plus" onclick="ajouterHab()">+</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- OBJECTIFS -->
+  <section class="page" id="objectifs">
+    <div class="carte">
+      <div class="titre-sec"><span class="pastille"></span>Mes grands objectifs</div>
+      <div id="listeObj"></div>
+    </div>
+    <div class="carte">
+      <div class="titre-sec"><span class="pastille" style="background:var(--or)"></span>Nouvel objectif</div>
+      <div class="ajout">
+        <input type="text" id="inpObj" placeholder="Ex : apprendre l'anglais..." onkeydown="if(event.key==='Enter')ajouterObj()">
+        <button class="btn-plus" onclick="ajouterObj()">+</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- JOURNAL INTIME -->
+  <section class="page" id="journal">
+    <div class="carte">
+      <div class="titre-sec"><span class="pastille"></span>Cher journal…</div>
+      <div id="dateEntree" class="date-entree"></div>
+
+      <label class="champ">Comment je me sens aujourd'hui ?</label>
+      <div class="humeurs" id="humeurs">
+        <button type="button" data-h="😊" onclick="choisirHumeur(this)">😊</button>
+        <button type="button" data-h="😍" onclick="choisirHumeur(this)">😍</button>
+        <button type="button" data-h="😌" onclick="choisirHumeur(this)">😌</button>
+        <button type="button" data-h="😐" onclick="choisirHumeur(this)">😐</button>
+        <button type="button" data-h="😔" onclick="choisirHumeur(this)">😔</button>
+        <button type="button" data-h="😢" onclick="choisirHumeur(this)">😢</button>
+        <button type="button" data-h="😤" onclick="choisirHumeur(this)">😤</button>
+        <button type="button" data-h="🥰" onclick="choisirHumeur(this)">🥰</button>
+      </div>
+
+      <label class="champ">Un titre pour ma journée <span style="font-weight:400">(facultatif)</span></label>
+      <input type="text" id="jTitre" class="inp-titre" placeholder="Ex : Une journée pleine de surprises...">
+
+      <label class="champ">Mes activités &amp; mes pensées</label>
+      <textarea id="jTexte" class="grand" placeholder="Raconte ta journée librement... Ce que tu as fait, vécu, ressenti. C'est ton espace à toi, personne d'autre ne le lit. ✨"></textarea>
+
+      <div class="petits-champs">
+        <div>
+          <label class="champ">💛 Ma fierté du jour</label>
+          <textarea id="jFiere" placeholder="Même une petite victoire..."></textarea>
+        </div>
+        <div>
+          <label class="champ">🌱 Ce que j'améliore demain</label>
+          <textarea id="jMieux" placeholder="Un seul petit pas..."></textarea>
+        </div>
+      </div>
+
+      <button class="btn-plein" id="btnSauver" onclick="sauverJournal()">Enregistrer dans mon journal</button>
+      <button class="btn-annuler" id="btnAnnuler" onclick="annulerEdition()" style="display:none">Annuler la modification</button>
+    </div>
+
+    <div class="carte">
+      <div class="titre-sec"><span class="pastille" style="background:var(--lavande)"></span>Mes pages passées</div>
+      <div class="recherche">
+        <input type="text" id="rechJournal" placeholder="🔍 Rechercher dans mon journal..." oninput="rendreJournal()">
+      </div>
+      <div id="histJournal"></div>
+    </div>
+  </section>
+
+  <!-- CULTURE -->
+  <section class="page" id="culture">
+    <div class="carte">
+      <div class="titre-sec"><span class="pastille"></span>Ajouter à ma bibliothèque</div>
+      <div class="type-choix" id="cultTypes">
+        <button type="button" class="on" data-t="livre" onclick="choisirType(this,'cult')">📚 Livre</button>
+        <button type="button" data-t="film" onclick="choisirType(this,'cult')">🎬 Film</button>
+        <button type="button" data-t="serie" onclick="choisirType(this,'cult')">📺 Série</button>
+        <button type="button" data-t="doc" onclick="choisirType(this,'cult')">🎥 Documentaire</button>
+      </div>
+      <input type="text" id="cTitre" class="inp-titre" style="margin-top:10px" placeholder="Titre">
+      <input type="text" id="cAuteur" class="inp-titre" style="margin-top:8px" placeholder="Auteur / réalisateur (facultatif)">
+      <label class="champ">Ma note</label>
+      <div class="etoiles" id="cEtoiles">
+        <span data-n="1" onclick="noterCult(1)">☆</span><span data-n="2" onclick="noterCult(2)">☆</span><span data-n="3" onclick="noterCult(3)">☆</span><span data-n="4" onclick="noterCult(4)">☆</span><span data-n="5" onclick="noterCult(5)">☆</span>
+      </div>
+      <label class="champ">Mon avis — j'en parle librement</label>
+      <textarea id="cAvis" placeholder="Ce que j'en ai pensé, ce que ça m'a appris, mes passages préférés..."></textarea>
+      <button class="btn-plein" id="btnCult" onclick="ajouterCult()">Ajouter à ma bibliothèque</button>
+      <button class="btn-annuler" id="btnCultAnnul" onclick="annulerCult()" style="display:none">Annuler</button>
+    </div>
+    <div class="carte">
+      <div class="titre-sec"><span class="pastille" style="background:var(--lavande)"></span>Ma bibliothèque</div>
+      <div class="filtres" id="cultFiltres">
+        <button class="on" data-f="tout" onclick="filtrerCult(this,'tout')">Tout</button>
+        <button data-f="livre" onclick="filtrerCult(this,'livre')">📚 Livres</button>
+        <button data-f="film" onclick="filtrerCult(this,'film')">🎬 Films</button>
+        <button data-f="serie" onclick="filtrerCult(this,'serie')">📺 Séries</button>
+        <button data-f="doc" onclick="filtrerCult(this,'doc')">🎥 Docs</button>
+      </div>
+      <div id="listeCult"></div>
+    </div>
+  </section>
+
+  <!-- CARNET -->
+  <section class="page" id="carnet">
+    <div class="carte">
+      <div class="titre-sec"><span class="pastille"></span>Noter dans mon carnet</div>
+      <div class="type-choix" id="carnTypes">
+        <button type="button" class="on" data-t="anecdote" onclick="choisirType(this,'carn')">💡 Anecdote</button>
+        <button type="button" data-t="mot" onclick="choisirType(this,'carn')">📝 Nouveau mot</button>
+        <button type="button" data-t="citation" onclick="choisirType(this,'carn')">💬 Citation</button>
+        <button type="button" data-t="idee" onclick="choisirType(this,'carn')">✨ Idée</button>
+      </div>
+      <input type="text" id="carnTitre" class="inp-titre" style="margin-top:10px" placeholder="Titre / le mot / le thème">
+      <textarea id="carnTexte" style="margin-top:8px" placeholder="Le sens, l'histoire, ton anecdote, la citation..."></textarea>
+      <button class="btn-plein" onclick="ajouterCarn()">Noter</button>
+    </div>
+    <div class="carte">
+      <div class="titre-sec"><span class="pastille" style="background:var(--or)"></span>Mon carnet</div>
+      <div class="recherche"><input type="text" id="rechCarn" placeholder="🔍 Rechercher..." oninput="rendreCarn()"></div>
+      <div id="listeCarn"></div>
+    </div>
+  </section>
+
+  <!-- ANGLAIS -->
+  <section class="page" id="anglais">
+    <div class="carte" style="text-align:center">
+      <div class="titre-sec" style="justify-content:center"><span class="pastille"></span>🇬🇧 Mon anglais</div>
+      <div class="stats" style="margin-bottom:0">
+        <div class="stat"><div class="num" id="vTotal">0</div><div class="lbl">mots appris</div></div>
+        <div class="stat"><div class="num" id="vMaitrise">0</div><div class="lbl">maîtrisés ✓</div></div>
+        <div class="stat"><div class="num" id="vRevoir">0</div><div class="lbl">à revoir</div></div>
+      </div>
+    </div>
+
+    <div class="carte" id="carteRevision" style="display:none">
+      <div class="titre-sec"><span class="pastille" style="background:var(--vert)"></span>Mode révision</div>
+      <div class="flashcard" id="flashcard" onclick="retournerCarte()">
+        <div class="fc-face" id="fcFace">clique pour révéler</div>
+        <div class="fc-hint" id="fcHint">👆 clique pour voir la traduction</div>
+      </div>
+      <div class="fc-boutons">
+        <button class="fc-non" onclick="reviserCarte(false)">😕 À revoir</button>
+        <button class="fc-oui" onclick="reviserCarte(true)">😊 Je sais !</button>
+      </div>
+      <button class="btn-annuler" onclick="finRevision()">Terminer la révision</button>
+    </div>
+
+    <div class="carte" id="carteAjoutVoc">
+      <div class="titre-sec"><span class="pastille" style="background:var(--vert)"></span>Nouveau mot</div>
+      <input type="text" id="vEn" class="inp-titre" placeholder="En anglais — ex : beautiful">
+      <input type="text" id="vFr" class="inp-titre" style="margin-top:8px" placeholder="En français — ex : beau / belle">
+      <input type="text" id="vEx" class="inp-titre" style="margin-top:8px" placeholder="Une phrase d'exemple (facultatif)">
+      <button class="btn-plein" onclick="ajouterVoc()">Ajouter le mot</button>
+      <button class="btn-plein" id="btnLancerRev" style="background:var(--vert);margin-top:8px" onclick="lancerRevision()">🎴 Réviser mes mots</button>
+    </div>
+
+    <div class="carte">
+      <div class="titre-sec"><span class="pastille" style="background:var(--lavande)"></span>Mon vocabulaire</div>
+      <div class="recherche"><input type="text" id="rechVoc" placeholder="🔍 Rechercher un mot..." oninput="rendreVoc()"></div>
+      <div id="listeVoc"></div>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button class="actif" data-p="accueil" onclick="aller('accueil',this)"><span class="ic">🏠</span>Accueil</button>
+  <button data-p="jour" onclick="aller('jour',this)"><span class="ic">✅</span>Jour</button>
+  <button data-p="habitudes" onclick="aller('habitudes',this)"><span class="ic">🌱</span>Habitudes</button>
+  <button data-p="objectifs" onclick="aller('objectifs',this)"><span class="ic">🎯</span>Objectifs</button>
+  <button data-p="journal" onclick="aller('journal',this)"><span class="ic">📖</span>Journal</button>
+  <button data-p="culture" onclick="aller('culture',this)"><span class="ic">🎬</span>Culture</button>
+  <button data-p="carnet" onclick="aller('carnet',this)"><span class="ic">💡</span>Carnet</button>
+  <button data-p="anglais" onclick="aller('anglais',this)"><span class="ic">🇬🇧</span>Anglais</button>
+</nav>
+
+<script>
+const DB={
+  get(k,d){try{return JSON.parse(localStorage.getItem('eclose_'+k))??d}catch(e){return d}},
+  set(k,v){localStorage.setItem('eclose_'+k,JSON.stringify(v))}
+};
+const auj=()=>new Date().toISOString().slice(0,10);
+const uid=()=>Date.now()+''+Math.floor(Math.random()*999);
+
+const QUALITES=['Intelligente','Honnête','Sincère','Très aimable'];
+const DEFAUTS=[
+  {d:'Casanière',t:'Je sors, je bouge, je découvre'},
+  {d:'Paresseuse',t:'Je passe à l\'action, tout de suite'},
+  {d:'Trop simple',t:'J\'ose, je m\'affirme, je brille'}
+];
+const CITATIONS=[
+  "Un petit pas chaque jour mène à de grands changements. 🌸",
+  "Tu n'as pas besoin d'être parfaite, juste un peu meilleure qu'hier.",
+  "La femme que tu veux devenir se construit dans tes petits gestes d'aujourd'hui.",
+  "Sors de ta zone de confort : c'est là que la magie opère. ✨",
+  "Ton intelligence + ton action = une vie qui te ressemble.",
+  "Agir maintenant vaut mieux qu'agir parfaitement plus tard.",
+  "Chaque jour est une nouvelle page. Écris-la avec fierté."
+];
+const HAB_DEFAUT=[
+  {id:'h1',nom:'Sortir / bouger',but:'Contre la routine',jours:{}},
+  {id:'h2',nom:'Faire une tâche difficile',but:'Contre la paresse',jours:{}},
+  {id:'h3',nom:'Oser sortir de ma zone',but:'M\'affirmer',jours:{}},
+  {id:'h4',nom:'Apprendre / me cultiver',but:'Grandir chaque jour',jours:{}}
+];
+
+let taches=DB.get('taches',[]);
+let habs=DB.get('habs',HAB_DEFAUT);
+let objs=DB.get('objs',[]);
+let notes=DB.get('notes',[]);
+
+/* ---------- NAV ---------- */
+function aller(p,btn){
+  document.querySelectorAll('.page').forEach(s=>s.classList.remove('actif'));
+  document.getElementById(p).classList.add('actif');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('actif'));
+  btn.classList.add('actif');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ---------- HEADER ---------- */
+function initHeader(){
+  const h=new Date().getHours();
+  document.getElementById('salut').textContent=h<18?'Bonjour Mariam':'Bonsoir Mariam';
+  document.getElementById('dateJour').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  const idx=new Date().getDate()%CITATIONS.length;
+  document.getElementById('citation').textContent=CITATIONS[idx];
+  document.getElementById('qualites').innerHTML=QUALITES.map(q=>`<span class="tag">${q}</span>`).join('');
+  document.getElementById('defauts').innerHTML=DEFAUTS.map(x=>
+    `<div style="margin-bottom:8px"><span style="text-decoration:line-through;color:var(--texte-pale)">${x.d}</span> <span style="color:var(--vert)">→ ${x.t}</span></div>`).join('');
+}
+
+/* ---------- TÂCHES ---------- */
+function ajouterTache(){
+  const i=document.getElementById('inpTache');
+  const t=i.value.trim(); if(!t)return;
+  taches.push({id:uid(),txt:t,type:document.getElementById('inpType').value,fait:false,date:auj()});
+  i.value=''; DB.set('taches',taches); rendreTaches(); rendreAccueil();
+}
+function toggleTache(id){
+  const t=taches.find(x=>x.id===id); t.fait=!t.fait;
+  DB.set('taches',taches); rendreTaches(); rendreAccueil();
+}
+function supTache(id){
+  taches=taches.filter(x=>x.id!==id); DB.set('taches',taches); rendreTaches(); rendreAccueil();
+}
+function rendreTaches(){
+  ['boulot','perso'].forEach(type=>{
+    const el=document.getElementById(type==='boulot'?'listeBoulot':'listePerso');
+    const lst=taches.filter(t=>t.type===type&&t.date===auj());
+    if(!lst.length){el.innerHTML='<div class="vide">Rien pour l\'instant. Ajoute ta première tâche 🌱</div>';return}
+    el.innerHTML=lst.map(t=>`
+      <div class="ligne ${t.fait?'fait':''}">
+        <div class="check ${t.fait?'on':''}" onclick="toggleTache('${t.id}')">${t.fait?'✓':''}</div>
+        <div class="txt">${escape(t.txt)}</div>
+        <button class="sup" onclick="supTache('${t.id}')">×</button>
+      </div>`).join('');
+  });
+}
+
+/* ---------- HABITUDES ---------- */
+function ajouterHab(){
+  const i=document.getElementById('inpHab'); const n=i.value.trim(); if(!n)return;
+  habs.push({id:uid(),nom:n,but:'',jours:{}}); i.value='';
+  DB.set('habs',habs); rendreHab(); rendreAccueil();
+}
+function toggleJour(id,date){
+  const h=habs.find(x=>x.id===id); h.jours[date]=!h.jours[date];
+  DB.set('habs',habs); rendreHab(); rendreAccueil();
+}
+function supHab(id){
+  habs=habs.filter(x=>x.id!==id); DB.set('habs',habs); rendreHab(); rendreAccueil();
+}
+function semaineDates(){
+  const d=new Date(); const lundi=new Date(d);
+  const j=(d.getDay()+6)%7; lundi.setDate(d.getDate()-j);
+  return Array.from({length:7},(_,k)=>{const x=new Date(lundi);x.setDate(lundi.getDate()+k);return x.toISOString().slice(0,10)});
+}
+function calcFeu(h){
+  let feu=0; let d=new Date();
+  for(let k=0;k<365;k++){const s=d.toISOString().slice(0,10);if(h.jours[s]){feu++;d.setDate(d.getDate()-1)}else if(k===0){d.setDate(d.getDate()-1)}else break}
+  return feu;
+}
+function rendreHab(){
+  const sem=semaineDates(); const J=['L','M','M','J','V','S','D'];
+  document.getElementById('listeHab').innerHTML=habs.map(h=>{
+    const feu=calcFeu(h);
+    return `<div class="hab">
+      <div class="hab-tete">
+        <div><span class="hab-nom">${escape(h.nom)}</span> ${h.but?`<span class="hab-but">· ${escape(h.but)}</span>`:''}</div>
+        <div style="display:flex;align-items:center;gap:8px">${feu>0?`<span class="feu">${feu}🔥</span>`:''}<button class="sup" onclick="supHab('${h.id}')">×</button></div>
+      </div>
+      <div class="semaine">${sem.map((d,k)=>`
+        <div class="jour ${h.jours[d]?'on':''} ${d===auj()?'ajd':''}" onclick="toggleJour('${h.id}','${d}')">
+          <span class="j">${J[k]}</span><span>${parseInt(d.slice(8))}</span>
+        </div>`).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------- OBJECTIFS ---------- */
+function ajouterObj(){
+  const i=document.getElementById('inpObj'); const n=i.value.trim(); if(!n)return;
+  objs.push({id:uid(),nom:n,pct:0}); i.value='';
+  DB.set('objs',objs); rendreObj();
+}
+function majObj(id,delta){
+  const o=objs.find(x=>x.id===id); o.pct=Math.max(0,Math.min(100,o.pct+delta));
+  DB.set('objs',objs); rendreObj();
+}
+function supObj(id){objs=objs.filter(x=>x.id!==id);DB.set('objs',objs);rendreObj()}
+function rendreObj(){
+  const el=document.getElementById('listeObj');
+  if(!objs.length){el.innerHTML='<div class="vide">Quel est ton premier grand rêve ? 🎯</div>';return}
+  el.innerHTML=objs.map(o=>`
+    <div class="obj">
+      <div class="obj-tete">
+        <div class="obj-nom">${escape(o.nom)}</div>
+        <button class="sup" onclick="supObj('${o.id}')">×</button>
+      </div>
+      <div class="obj-ctrl">
+        <button onclick="majObj('${o.id}',-10)">−</button>
+        <div class="barre" style="flex:1"><span style="width:${o.pct}%"></span></div>
+        <button onclick="majObj('${o.id}',10)">+</button>
+        <div class="obj-pct">${o.pct}%</div>
+      </div>
+    </div>`).join('');
+}
+
+/* ---------- JOURNAL INTIME ---------- */
+let humeurChoisie='';
+let editionId=null;
+
+function choisirHumeur(btn){
+  document.querySelectorAll('#humeurs button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); humeurChoisie=btn.dataset.h;
+}
+function initDateEntree(){
+  document.getElementById('dateEntree').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+function videFormJournal(){
+  document.getElementById('jTitre').value='';
+  document.getElementById('jTexte').value='';
+  document.getElementById('jFiere').value='';
+  document.getElementById('jMieux').value='';
+  document.querySelectorAll('#humeurs button').forEach(b=>b.classList.remove('on'));
+  humeurChoisie='';
+}
+function annulerEdition(){
+  editionId=null; videFormJournal();
+  document.getElementById('btnSauver').textContent='Enregistrer dans mon journal';
+  document.getElementById('btnAnnuler').style.display='none';
+  initDateEntree();
+}
+function sauverJournal(){
+  const titre=document.getElementById('jTitre').value.trim();
+  const texte=document.getElementById('jTexte').value.trim();
+  const f=document.getElementById('jFiere').value.trim();
+  const m=document.getElementById('jMieux').value.trim();
+  if(!titre&&!texte&&!f&&!m&&!humeurChoisie)return;
+
+  if(editionId){
+    const n=notes.find(x=>x.id===editionId);
+    Object.assign(n,{titre,texte,fiere:f,mieux:m,humeur:humeurChoisie});
+    editionId=null;
+    document.getElementById('btnAnnuler').style.display='none';
+    document.getElementById('btnSauver').textContent='Enregistrer dans mon journal';
+  }else{
+    notes.unshift({id:uid(),date:auj(),heure:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),titre,texte,fiere:f,mieux:m,humeur:humeurChoisie});
+    notes=notes.slice(0,200);
+  }
+  DB.set('notes',notes);
+  videFormJournal(); initDateEntree(); rendreJournal();
+  const b=document.getElementById('btnSauver'); const o=b.textContent;
+  b.textContent='Enregistré ✓ 🌸'; setTimeout(()=>b.textContent=o,1600);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function modifierNote(id){
+  const n=notes.find(x=>x.id===id); if(!n)return;
+  editionId=id;
+  document.getElementById('jTitre').value=n.titre||'';
+  document.getElementById('jTexte').value=n.texte||'';
+  document.getElementById('jFiere').value=n.fiere||'';
+  document.getElementById('jMieux').value=n.mieux||'';
+  humeurChoisie=n.humeur||'';
+  document.querySelectorAll('#humeurs button').forEach(b=>b.classList.toggle('on',b.dataset.h===n.humeur));
+  document.getElementById('dateEntree').textContent='Modification — '+new Date(n.date).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('btnSauver').textContent='Mettre à jour';
+  document.getElementById('btnAnnuler').style.display='block';
+  document.getElementById('journal').scrollIntoView({behavior:'smooth'});
+}
+function supNote(id){
+  if(!confirm('Supprimer cette page de ton journal ? C\'est définitif.'))return;
+  notes=notes.filter(x=>x.id!==id); DB.set('notes',notes); rendreJournal();
+}
+function rendreJournal(){
+  const el=document.getElementById('histJournal');
+  const q=(document.getElementById('rechJournal')?.value||'').toLowerCase().trim();
+  let lst=notes;
+  if(q)lst=notes.filter(n=>((n.titre||'')+' '+(n.texte||'')+' '+(n.fiere||'')+' '+(n.mieux||'')).toLowerCase().includes(q));
+  if(!lst.length){el.innerHTML='<div class="vide">'+(q?'Aucune page trouvée.':'Ton histoire commence ici 📖 Écris ta première page.')+'</div>';return}
+  el.innerHTML=lst.map(n=>{
+    const id=n.id||('x'+n.date);
+    const d=new Date(n.date).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    return `<div class="note-hist">
+      <div class="haut">
+        <div class="d">${d}${n.heure?' · '+n.heure:''}</div>
+        ${n.humeur?`<div class="hum">${n.humeur}</div>`:''}
+      </div>
+      ${n.titre?`<div class="titre-note">${escape(n.titre)}</div>`:''}
+      ${n.texte?`<div class="corps">${escape(n.texte)}</div>`:''}
+      ${n.fiere?`<div class="extra">💛 <b>Fierté :</b> ${escape(n.fiere)}</div>`:''}
+      ${n.mieux?`<div class="extra">🌱 <b>Demain :</b> ${escape(n.mieux)}</div>`:''}
+      ${n.id?`<div class="actions"><button class="mod" onclick="modifierNote('${id}')">✏️ Modifier</button><button onclick="supNote('${id}')">🗑 Supprimer</button></div>`:''}
+    </div>`;
+  }).join('');
+}
+
+/* ---------- ACCUEIL ---------- */
+function rendreAccueil(){
+  const tj=taches.filter(t=>t.date===auj());
+  const faites=tj.filter(t=>t.fait).length;
+  const habJour=habs.filter(h=>h.jours[auj()]).length;
+  const feuMax=habs.length?Math.max(0,...habs.map(calcFeu)):0;
+  document.getElementById('sTaches').textContent=faites;
+  document.getElementById('sHab').textContent=habJour+'/'+habs.length;
+  document.getElementById('sFeu').textContent=feuMax;
+  const total=tj.length+habs.length;
+  const done=faites+habJour;
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('barreJour').style.width=pct+'%';
+  let msg;
+  if(pct===0)msg="Une nouvelle journée t'attend. Commence par un petit geste 🌸";
+  else if(pct<50)msg=`Bien joué, tu as commencé ! Continue sur ta lancée 💪`;
+  else if(pct<100)msg=`Superbe rythme aujourd'hui : ${pct}% accompli ! ✨`;
+  else msg="Journée parfaite ! Tu es en train de devenir cette femme accomplie 👑";
+  document.getElementById('resumeJour').textContent=msg;
+}
+
+function escape(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+/* ---------- CULTURE ---------- */
+let cult=DB.get('cult',[]);
+let cultType='livre', cultNote=0, cultFiltre='tout', cultEdit=null;
+const ICO_CULT={livre:'📚',film:'🎬',serie:'📺',doc:'🎥'};
+const NOM_CULT={livre:'Livre',film:'Film',serie:'Série',doc:'Documentaire'};
+
+function choisirType(btn,groupe){
+  const cont=btn.parentElement;
+  cont.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  if(groupe==='cult')cultType=btn.dataset.t; else carnType=btn.dataset.t;
+}
+function noterCult(n){
+  cultNote=n;
+  document.querySelectorAll('#cEtoiles span').forEach(s=>s.textContent=parseInt(s.dataset.n)<=n?'★':'☆');
+}
+function ajouterCult(){
+  const t=document.getElementById('cTitre').value.trim(); if(!t){document.getElementById('cTitre').focus();return}
+  const obj={id:cultEdit||uid(),type:cultType,titre:t,auteur:document.getElementById('cAuteur').value.trim(),note:cultNote,avis:document.getElementById('cAvis').value.trim(),date:auj()};
+  if(cultEdit){const i=cult.findIndex(x=>x.id===cultEdit);cult[i]=obj;cultEdit=null;document.getElementById('btnCultAnnul').style.display='none';document.getElementById('btnCult').textContent='Ajouter à ma bibliothèque'}
+  else cult.unshift(obj);
+  DB.set('cult',cult); annulerCultVide(); rendreCult();
+}
+function annulerCultVide(){
+  document.getElementById('cTitre').value='';document.getElementById('cAuteur').value='';document.getElementById('cAvis').value='';
+  cultNote=0; noterCult(0);
+}
+function annulerCult(){cultEdit=null;annulerCultVide();document.getElementById('btnCultAnnul').style.display='none';document.getElementById('btnCult').textContent='Ajouter à ma bibliothèque'}
+function modifierCult(id){
+  const c=cult.find(x=>x.id===id);cultEdit=id;cultType=c.type;
+  document.querySelectorAll('#cultTypes button').forEach(b=>b.classList.toggle('on',b.dataset.t===c.type));
+  document.getElementById('cTitre').value=c.titre;document.getElementById('cAuteur').value=c.auteur||'';document.getElementById('cAvis').value=c.avis||'';
+  noterCult(c.note||0);
+  document.getElementById('btnCult').textContent='Mettre à jour';document.getElementById('btnCultAnnul').style.display='block';
+  document.getElementById('culture').scrollIntoView({behavior:'smooth'});
+}
+function supCult(id){if(!confirm('Supprimer cette fiche ?'))return;cult=cult.filter(x=>x.id!==id);DB.set('cult',cult);rendreCult()}
+function filtrerCult(btn,f){document.querySelectorAll('#cultFiltres button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');cultFiltre=f;rendreCult()}
+function rendreCult(){
+  const el=document.getElementById('listeCult');
+  let lst=cultFiltre==='tout'?cult:cult.filter(c=>c.type===cultFiltre);
+  if(!lst.length){el.innerHTML='<div class="vide">Rien ici encore. Ajoute ta première œuvre 🎬</div>';return}
+  el.innerHTML=lst.map(c=>`
+    <div class="fiche">
+      <div class="ft">
+        <div>
+          <div class="fnom">${ICO_CULT[c.type]||''} ${escape(c.titre)}</div>
+          ${c.auteur?`<div class="fauteur">${escape(c.auteur)}</div>`:''}
+        </div>
+        <span class="ftype">${NOM_CULT[c.type]||''}</span>
+      </div>
+      ${c.note?`<div class="fnote">${'★'.repeat(c.note)}${'☆'.repeat(5-c.note)}</div>`:''}
+      ${c.avis?`<div class="favis">${escape(c.avis)}</div>`:''}
+      <div class="actions"><button class="mod" onclick="modifierCult('${c.id}')">✏️ Modifier</button><button onclick="supCult('${c.id}')">🗑</button></div>
+    </div>`).join('');
+}
+
+/* ---------- CARNET ---------- */
+let carnet=DB.get('carnet',[]);
+let carnType='anecdote';
+const ICO_CARN={anecdote:'💡',mot:'📝',citation:'💬',idee:'✨'};
+const NOM_CARN={anecdote:'Anecdote',mot:'Nouveau mot',citation:'Citation',idee:'Idée'};
+function ajouterCarn(){
+  const t=document.getElementById('carnTitre').value.trim();
+  const x=document.getElementById('carnTexte').value.trim();
+  if(!t&&!x)return;
+  carnet.unshift({id:uid(),cat:carnType,titre:t,texte:x,date:auj()});
+  DB.set('carnet',carnet);
+  document.getElementById('carnTitre').value='';document.getElementById('carnTexte').value='';
+  rendreCarn();
+}
+function supCarn(id){if(!confirm('Supprimer cette note ?'))return;carnet=carnet.filter(x=>x.id!==id);DB.set('carnet',carnet);rendreCarn()}
+function rendreCarn(){
+  const el=document.getElementById('listeCarn');
+  const q=(document.getElementById('rechCarn')?.value||'').toLowerCase().trim();
+  let lst=q?carnet.filter(n=>((n.titre||'')+' '+(n.texte||'')).toLowerCase().includes(q)):carnet;
+  if(!lst.length){el.innerHTML='<div class="vide">'+(q?'Rien trouvé.':'Ton carnet est vide. Note ta première trouvaille ✨')+'</div>';return}
+  el.innerHTML=lst.map(n=>`
+    <div class="fiche">
+      <div class="ft">
+        <div class="fnom">${ICO_CARN[n.cat]||''} ${escape(n.titre||'(sans titre)')}</div>
+        <span class="ftype">${NOM_CARN[n.cat]||''}</span>
+      </div>
+      ${n.texte?`<div class="favis">${escape(n.texte)}</div>`:''}
+      <div class="fauteur" style="margin-top:6px">${new Date(n.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}</div>
+      <div class="actions"><button onclick="supCarn('${n.id}')">🗑 Supprimer</button></div>
+    </div>`).join('');
+}
+
+/* ---------- ANGLAIS ---------- */
+let voc=DB.get('voc',[]);
+let fileRev=[], carteRev=null, faceVisible=false;
+function ajouterVoc(){
+  const en=document.getElementById('vEn').value.trim();
+  const fr=document.getElementById('vFr').value.trim();
+  if(!en||!fr){alert('Écris le mot en anglais et sa traduction 🇬🇧');return}
+  voc.unshift({id:uid(),en,fr,ex:document.getElementById('vEx').value.trim(),maitrise:false,date:auj()});
+  DB.set('voc',voc);
+  document.getElementById('vEn').value='';document.getElementById('vFr').value='';document.getElementById('vEx').value='';
+  rendreVoc();
+}
+function toggleMaitrise(id){const v=voc.find(x=>x.id===id);v.maitrise=!v.maitrise;DB.set('voc',voc);rendreVoc()}
+function supVoc(id){voc=voc.filter(x=>x.id!==id);DB.set('voc',voc);rendreVoc()}
+function rendreVoc(){
+  document.getElementById('vTotal').textContent=voc.length;
+  document.getElementById('vMaitrise').textContent=voc.filter(v=>v.maitrise).length;
+  document.getElementById('vRevoir').textContent=voc.filter(v=>!v.maitrise).length;
+  const el=document.getElementById('listeVoc');
+  const q=(document.getElementById('rechVoc')?.value||'').toLowerCase().trim();
+  let lst=q?voc.filter(v=>(v.en+' '+v.fr).toLowerCase().includes(q)):voc;
+  if(!lst.length){el.innerHTML='<div class="vide">'+(q?'Aucun mot trouvé.':'Ajoute ton premier mot d\'anglais 🇬🇧')+'</div>';return}
+  el.innerHTML=lst.map(v=>`
+    <div class="voc">
+      <div style="flex:1">
+        <div class="ven">${escape(v.en)}</div>
+        <div class="vfr">${escape(v.fr)}</div>
+        ${v.ex?`<div class="vex">« ${escape(v.ex)} »</div>`:''}
+      </div>
+      <div class="vok ${v.maitrise?'on':''}" title="Marquer comme maîtrisé" onclick="toggleMaitrise('${v.id}')">✓</div>
+      <button class="sup" onclick="supVoc('${v.id}')">×</button>
+    </div>`).join('');
+}
+function lancerRevision(){
+  fileRev=voc.filter(v=>!v.maitrise);
+  if(!fileRev.length){alert(voc.length?'Bravo, tu maîtrises déjà tous tes mots ! 🎉':'Ajoute d\'abord quelques mots à réviser 🇬🇧');return}
+  fileRev.sort(()=>Math.random()-.5);
+  document.getElementById('carteRevision').style.display='block';
+  document.getElementById('carteAjoutVoc').style.display='none';
+  prochaineCarte();
+  document.getElementById('carteRevision').scrollIntoView({behavior:'smooth'});
+}
+function prochaineCarte(){
+  if(!fileRev.length){finRevision(true);return}
+  carteRev=fileRev.shift(); faceVisible=false;
+  document.getElementById('fcFace').textContent=carteRev.en;
+  document.getElementById('fcHint').textContent='👆 clique pour voir la traduction';
+}
+function retournerCarte(){
+  if(!carteRev)return;
+  faceVisible=!faceVisible;
+  if(faceVisible){
+    document.getElementById('fcFace').textContent=carteRev.fr;
+    document.getElementById('fcHint').textContent=carteRev.ex?'« '+carteRev.ex+' »':'👆 clique pour revoir le mot';
+  }else{
+    document.getElementById('fcFace').textContent=carteRev.en;
+    document.getElementById('fcHint').textContent='👆 clique pour voir la traduction';
+  }
+}
+function reviserCarte(su){
+  if(!carteRev)return;
+  if(su){const v=voc.find(x=>x.id===carteRev.id);if(v){v.maitrise=true;DB.set('voc',voc)}}
+  prochaineCarte();
+}
+function finRevision(fini){
+  document.getElementById('carteRevision').style.display='none';
+  document.getElementById('carteAjoutVoc').style.display='block';
+  carteRev=null; rendreVoc();
+  if(fini)alert('Révision terminée ! Continue comme ça 🌟');
+}
+
+/* ---------- INIT ---------- */
+initHeader(); initDateEntree(); rendreTaches(); rendreHab(); rendreObj(); rendreJournal();
+rendreCult(); rendreCarn(); rendreVoc(); rendreAccueil();
+
+/* ---------- PWA : service worker + installation ---------- */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(e=>console.warn('SW non enregistré',e));
+  });
+}
+let promptInstall=null;
+window.addEventListener('beforeinstallprompt',(e)=>{
+  e.preventDefault(); promptInstall=e;
+  document.getElementById('btnInstall').style.display='inline-flex';
+});
+function installerApp(){
+  if(!promptInstall)return;
+  promptInstall.prompt();
+  promptInstall.userChoice.finally(()=>{
+    promptInstall=null;
+    document.getElementById('btnInstall').style.display='none';
+  });
+}
+window.addEventListener('appinstalled',()=>{
+  document.getElementById('btnInstall').style.display='none';
+});
+</script>
+</body>
+</html>
