@@ -1,5 +1,5 @@
 /* Service Worker d'Éclose — permet le fonctionnement hors-ligne */
-const CACHE = 'eclose-v6';
+const CACHE = 'eclose-v7';
 const FICHIERS = [
   './',
   './index.html',

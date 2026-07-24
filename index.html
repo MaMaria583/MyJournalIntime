@@ -267,7 +267,7 @@ label.champ{display:block;font-size:13px;font-weight:600;color:var(--doux);margi
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* ---------- ÉDITEUR RICHE ---------- */
-.ed-zone{padding-bottom:90px}
+.ed-zone{padding-bottom:40px}
 .ed-corps{white-space:pre-wrap;word-break:break-word}
 .ed-corps:empty:before{content:attr(data-ph);color:#00000030}
 .ed-corps:focus{outline:none}
@@ -353,32 +353,6 @@ label.champ{display:block;font-size:13px;font-weight:600;color:var(--doux);margi
   </div>
   <input type="file" id="fichierImg" accept="image/*" class="cache" onchange="chargerImage(event)">
 
-  <!-- popover mise en forme -->
-  <div class="ed-format" id="edFormat">
-    <button type="button" onclick="fmt('bold')"><b>G</b></button>
-    <button type="button" onclick="fmt('italic')"><i>I</i></button>
-    <button type="button" onclick="fmt('underline')"><u>S</u></button>
-    <button type="button" onclick="fmt('strikeThrough')"><s>Barré</s></button>
-    <button type="button" onclick="fmt('formatBlock','H2')">Titre</button>
-    <button type="button" onclick="fmt('formatBlock','H3')">Sous-titre</button>
-    <button type="button" onclick="fmt('formatBlock','div')">Normal</button>
-    <button type="button" onclick="fmt('insertOrderedList')">1. Liste</button>
-  </div>
-  <!-- popover emoji -->
-  <div class="ed-emoji" id="edEmoji"></div>
-
-  <!-- barre d'outils -->
-  <div class="ed-toolbar" id="edToolbar">
-    <button type="button" class="tb" onclick="basculerFormat()">Aa</button>
-    <button type="button" class="tb" onclick="insererChecklist()">☑️</button>
-    <button type="button" class="tb" id="tbMic" onclick="dictee()">🎤</button>
-    <button type="button" class="tb pt" onclick="ouvrirDessin()">✏️</button>
-    <button type="button" class="tb" onclick="ajouterImage()">🖼️</button>
-    <button type="button" class="tb" onclick="basculerEmoji()">😊</button>
-    <button type="button" class="tb" onclick="insererDivider()">▤</button>
-    <button type="button" class="tb" onclick="fmt('insertUnorderedList')">☰</button>
-  </div>
-
   <!-- bottom sheet fonds -->
   <div class="sheet" id="sheetFonds">
     <div class="sheet-tabs" id="sheetTabs"></div>
@@ -386,17 +360,6 @@ label.champ{display:block;font-size:13px;font-weight:600;color:var(--doux);margi
   </div>
 </section>
 
-<!-- ============ MODAL DESSIN ============ -->
-<div class="dessin-modal" id="dessinModal">
-  <div class="dessin-barre">
-    <button class="ico-btn" onclick="annulerDessin()">✕</button>
-    <span style="font-weight:700">Dessiner</span>
-    <span style="margin-left:auto;display:flex;gap:8px" id="dessinCouleurs"></span>
-    <button class="ico-btn" onclick="effacerDessin()">🧹</button>
-    <button class="ico-btn" onclick="validerDessin()">✓</button>
-  </div>
-  <canvas id="dessinCanvas"></canvas>
-</div>
 
 <!-- ============ CALENDRIER ============ -->
 <section class="ecran" id="ecranCalendrier">
@@ -863,7 +826,6 @@ function ouvrirEditeur(n,neuve){
   document.getElementById('edTitre').value=n.titre||'';
   document.getElementById('edCorps').innerHTML=corpsHtml(n);
   document.getElementById('edDate').textContent=(n.cree===auj()?'Aujourd\'hui':new Date(n.cree).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}));
-  document.getElementById('edFormat').classList.remove('on');document.getElementById('edEmoji').classList.remove('on');
   majImgUI(); majFavUI(); majCatSelect(); appliquerFondEditeur();
   ouvrir('ecranEditeur');
 }
@@ -1188,20 +1150,6 @@ function finRevision(fini){document.getElementById('carteRevision').style.displa
 /* ================= INIT ================= */
 rendreChips(); rendreNotes(); rendreDrawerCats(); majBadges();
 
-/* barre d'outils : préserver la sélection (les boutons ne volent pas le focus) */
-['edToolbar','edFormat','edEmoji'].forEach(id=>{const c=document.getElementById(id);if(c)c.addEventListener('mousedown',e=>e.preventDefault())});
-/* grille d'emojis */
-const EMOJIS=['😊','😍','🥰','😂','😌','😔','😢','😤','😎','🤔','👍','🙏','💪','🔥','✨','🌟','💛','❤️','💜','💚','🌸','🌷','🌈','☀️','🌙','⭐','✅','❌','📌','📝','💡','🎯','🎉','🍅','🐐','🌱','🥦','📚','⏰','💰','🏆','😇','😴','🤗','👏','🙌','💫','🇬🇧'];
-document.getElementById('edEmoji').innerHTML=EMOJIS.map(e=>`<button type="button" onclick="insererEmoji('${e}')">${e}</button>`).join('');
-/* dessin : gestion du tracé */
-(function(){
-  const cv=document.getElementById('dessinCanvas');
-  const pos=e=>{const r=cv.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
-  cv.addEventListener('pointerdown',e=>{if(!dCtx)return;dDessine=true;const[x,y]=pos(e);dCtx.strokeStyle=dCoul;dCtx.lineWidth=3.5;dCtx.beginPath();dCtx.moveTo(x,y);try{cv.setPointerCapture(e.pointerId)}catch(_){}});
-  cv.addEventListener('pointermove',e=>{if(!dDessine||!dCtx)return;const[x,y]=pos(e);dCtx.lineTo(x,y);dCtx.stroke()});
-  cv.addEventListener('pointerup',()=>dDessine=false);
-  cv.addEventListener('pointercancel',()=>dDessine=false);
-})();
 
 /* ---------- PWA ---------- */
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
